@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in — STRIDE</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="auth-shell">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M4 18 L10 10 L14 14 L20 6" />
+                    </svg>
+                </div>
+                <span>STRIDE</span>
+            </div>
+
+            <h1>Welcome back</h1>
+            <p class="auth-sub">Pick up where you left off.</p>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for m in messages %}
+            <div class="flash">{{ m }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Log in</button>
+            </form>
+
+            <p class="auth-switch">New to STRIDE? <a href="{{ url_for('register') }}">Create an account</a></p>
+        </div>
+    </div>
+</body>
+
+</html>

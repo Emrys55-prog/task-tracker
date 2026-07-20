@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Tasks — STRIDE{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <h1>Your tasks</h1>
+    <div class="sub">{{ tasks|length }} total</div>
+  </div>
+  <button class="btn-new" id="openAddTask">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 5v14M5 12h14" />
+    </svg> New task
+  </button>
+</div>
+
+<!-- Signature element: the stride bar -->
+<div class="stride-bar">
+  <div class="stride-bar-head">
+    <span class="label">Today's stride</span>
+    <span class="count" id="strideCount">
+      {{ tasks|selectattr('status', 'equalto', 'completed')|list|length }} / {{ tasks|length }} done
+    </span>
+  </div>
+  <div class="stride-track" id="strideTrack">
+    {% for t in tasks %}
+    <div class="stride-step {{ 'done' if t.status == 'completed' else '' }}"></div>
+    {% else %}
+    <div class="stride-step"></div>
+    {% endfor %}
+  </div>
+</div>
+
+
+<!-- Stride Analytics Metrics Panel Row -->
+<div class="analytics-grid">
+  <div class="stat-card">
+    <div class="stat-label">Completion Rate</div>
+    <div class="stat-value">
+      {% if tasks|length > 0 %}
+      {{ ((tasks|selectattr('status', 'equalto', 'completed')|list|length / tasks|length) * 100)|round|int }}%
+      {% else %}
+      0%
+      {% endif %}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">High Priority Items</div>
+    <div class="stat-value">
+      {{ tasks|selectattr('priority', 'equalto', 'high')|list|length }}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending Action items</div>
+    <div class="stat-value">
+      {{ tasks|selectattr('status', 'equalto', 'pending')|list|length }}
+    </div>
+  </div>
+</div>
+
+
+
+<div class="task-toolbar">
+  <button class="filter-chip active" data-filter="all">All</button>
+  <button class="filter-chip" data-filter="pending">Pending</button>
+  <button class="filter-chip" data-filter="in_progress">In progress</button>
+  <button class="filter-chip" data-filter="completed">Completed</button>
+</div>
+
+<div class="task-list" id="taskList">
+  {% for t in tasks %}
+  <div class="task-row {{ 'is-done' if t.status == 'completed' else '' }}" data-status="{{ t.status }}"
+    data-task-id="{{ t.id }}">
+    <button class="task-check {{ 'checked' if t.status == 'completed' else '' }}" aria-label="Toggle complete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M20 6L9 17l-5-5" />
+      </svg>
+    </button>
+    <div class="task-main">
+      <div class="task-title">{{ t.title }}</div>
+      {% if t.description %}
+      <div class="task-desc">{{ t.description }}</div>
+      {% endif %}
+    </div>
+    <span class="pill priority-{{ t.priority }}">
+      <span class="pill-dot"></span>{{ t.priority }}
+    </span>
+    <span class="pill status-{{ t.status }}">{{ t.status.replace('_', ' ') }}</span>
+    {% if t.due_date %}
+    <span class="task-date">{{ t.due_date }}</span>
+    {% else %}
+    <span class="task-date">—</span>
+    {% endif %}
+
+    <!-- Three-dots action dropdown container -->
+    <div class="menu-container" style="position: relative;">
+      <button type="button" class="task-menu-btn" aria-label="Task options">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="19" r="1.5" />
+        </svg>
+      </button>
+      <div class="dropdown-menu" id="menu-{{ t.id }}">
+        <button type="button" class="dropdown-item edit-trigger" data-task-id="{{ t.id }}" data-title="{{ t.title }}"
+          data-description="{{ t.description or '' }}" data-due-date="{{ t.due_date or '' }}"
+          data-priority="{{ t.priority }}">Edit task</button>
+        <button type="button" class="dropdown-item delete-trigger text-danger" data-task-id="{{ t.id }}">Delete
+          task</button>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>No tasks yet</h3>
+    <p>Add your first task to start your stride.</p>
+    <button class="btn-new" id="openAddTaskEmpty">+ New task</button>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Add task modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <h2>New task</h2>
+    <form method="POST" action="{{ url_for('dashboard') }}">
+      <div class="field">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required autofocus>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="due_date">Due date</label>
+          <input type="date" id="due_date" name="due_date">
+        </div>
+        <div class="field">
+          <label for="priority">Priority</label>
+          <select id="priority" name="priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="closeAddTask">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Add task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Edit task</h2>
+    <form id="editTaskForm">
+      <input type="hidden" id="edit_task_id" name="id">
+      <div class="field"><label for="edit_title">Title</label><input type="text" id="edit_title" name="title" required>
+      </div>
+      <div class="field"><label for="edit_description">Description</label><textarea id="edit_description"
+          name="description" rows="3"></textarea></div>
+      <div class="field-row">
+        <div class="field"><label for="edit_due_date">Due date</label><input type="date" id="edit_due_date"
+            name="due_date"></div>
+        <div class="field">
+          <label for="edit_priority">Priority</label>
+          <select id="edit_priority" name="priority">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="closeEditModal">Cancel</button>
+        <button type="submit" class="btn-primary" style="width:auto;">Save updates</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
