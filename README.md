@@ -2,7 +2,7 @@
 CS50x Final Project - Task Tracker Web App
 
 # STRIDE
-### Project Video URL: [Insert your YouTube or CS50 video link here]
+### Project Video URL: (https://youtu.be/EMxHcXMARdI)
 ### Location: Home, Nairobi, Kenya
 
 --------------
